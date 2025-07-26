@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tech Bingo</title>
+  <style>
+    body { font-family: sans-serif; background: #f0f6ff; }
+    h1 { text-align: center; }
+    #celebrate { color: #22a; font-size: 2em; text-align: center; margin-top: 10px; min-height: 2.5em;}
+    table { border-collapse: collapse; margin: 0 auto; }
+    td {
+      width: 110px; height: 110px; text-align: center; vertical-align: middle;
+      border: 2px solid #222; font-size: 16px; cursor: pointer; background: #fff;
+      transition: background 0.2s;
+      position: relative;
+      user-select: none;
+    }
+    td.marked { background: #b2ffc2; }
+    .bingo-img {
+      width: 48px; height: 48px; display: block; margin: 6px auto 4px;
+    }
+    .free-square {
+      background: #ffe599 !important;
+      font-weight: bold;
+    }
+    canvas.confetti-canvas {
+      pointer-events: none;
+      position: fixed;
+      left: 0; top: 0;
+      width: 100vw; height: 100vh;
+      z-index: 9999;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Tech Bingo!</h1>
+  <div id="celebrate"></div>
+  <table id="bingo"></table>
+  <div style="text-align:center; margin-top:20px;">
+    <button onclick="generateBoard()">Shuffle Board</button>
+  </div>
+  <canvas id="confetti" class="confetti-canvas"></canvas>
+  <script>
+    const bingoData = [
+      { word: "Mouse", img: "https://cdn-icons-png.flaticon.com/512/3249/3249525.png" },
+      { word: "Keyboard", img: "https://cdn-icons-png.flaticon.com/512/1184/1184161.png" },
+      { word: "Monitor", img: "https://cdn-icons-png.flaticon.com/512/3474/3474360.png" },
+      { word: "Headphones", img: "https://cdn-icons-png.flaticon.com/512/2353/2353224.png" },
+      { word: "Printer", img: "https://cdn-icons-png.flaticon.com/512/1041/1041985.png" },
+      { word: "Chromebook", img: "https://cdn-icons-png.flaticon.com/512/2293/2293575.png" },
+      { word: "Internet", img: "https://cdn-icons-png.flaticon.com/512/1006/1006771.png" },
+      { word: "Tablet", img: "https://cdn-icons-png.flaticon.com/512/644/644425.png" },
+      { word: "Login", img: "https://cdn-icons-png.flaticon.com/512/1044/10448042.png" },
+      { word: "Search Engine", img: "https://cdn-icons-png.flaticon.com/512/1674/1674580.png" },
+      { word: "Touchpad", img: "https://cdn-icons-png.flaticon.com/512/12640/12640650.png" },
+      { word: "Shift Key", img: "https://cdn-icons-png.flaticon.com/512/6348/6348447.png" },
+      { word: "Password", img: "https://cdn-icons-png.flaticon.com/512/3064/3064155.png" },
+      { word: "Desktop", img: "https://cdn-icons-png.flaticon.com/512/1865/1865273.png" },
+      { word: "Touch Screen", img: "https://cdn-icons-png.flaticon.com/512/668/668635.png" },
+      { word: "Google Classroom", img: "https://cdn-icons-png.flaticon.com/512/720/720307.png" },
+      { word: "Link", img:  "https://cdn-icons-png.flaticon.com/512/11067/11067851.png"},
+      { word: "Curser", img:  "https://cdn-icons-png.flaticon.com/512/889/889838.png"},
+      { word: "Home Page", img:  "https://cdn-icons-png.flaticon.com/512/10307/10307932.png"},
+      { word: "Browser", img:  "https://cdn-icons-png.flaticon.com/512/888/888846.png"},
+      { word: "Charger", img:  "https://cdn-icons-png.flaticon.com/512/9960/9960440.png"},
+      { word: "Copy", img:  "https://cdn-icons-png.flaticon.com/512/3646/3646796.png"},
+      { word: "Paste", img:  "https://cdn-icons-png.flaticon.com/512/3645/3645817.png"},
+      { word: "Power Button", img:  "https://cdn-icons-png.flaticon.com/512/1596/159607.png"},
+      { word: "Select All", img:  "https://cdn-icons-png.flaticon.com/512/3646/3646221.png"}
+    ];
+
+    const BOARD_SIZE = 5;
+    let board = [];
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    }
+
+    function generateBoard() {
+      document.getElementById('celebrate').innerText = "";
+      let table = document.getElementById('bingo');
+      table.innerHTML = "";
+      let items = bingoData.slice();
+      shuffle(items);
+      board = [];
+      let dataIdx = 0;
+      for (let r = 0; r < BOARD_SIZE; r++) {
+        let row = [];
+        let tr = document.createElement('tr');
+        for (let c = 0; c < BOARD_SIZE; c++) {
+          let td = document.createElement('td');
+          if (r === 2 && c === 2) {
+            td.innerHTML = "FREE";
+            td.classList.add('marked', 'free-square');
+            row.push({ marked: true, td: td });
+          } else {
+            let item = items[dataIdx++];
+            td.onclick = () => toggleCell(r, c, td);
+            td.innerHTML =
+              (item.img ? `<img class="bingo-img" src="${item.img}" alt="">` : "") +
+              `<div>${item.word}</div>`;
+            row.push({ marked: false, word: item.word, img: item.img, td: td });
+          }
+          tr.appendChild(td);
+        }
+        board.push(row);
+        table.appendChild(tr);
+      }
+    }
+
+    function toggleCell(r, c, td) {
+      if (r === 2 && c === 2) return;
+      board[r][c].marked = !board[r][c].marked;
+      td.classList.toggle('marked');
+      if (checkBingo()) celebrate();
+    }
+
+    function checkBingo() {
+      for (let i = 0; i < BOARD_SIZE; i++) {
+        if (board[i].every(cell => cell.marked)) return true;
+        if (board.map(row => row[i]).every(cell => cell.marked)) return true;
+      }
+      if ([0,1,2,3,4].every(i => board[i][i].marked)) return true;
+      if ([0,1,2,3,4].every(i => board[i][4 - i].marked)) return true;
+      return false;
+    }
+
+    function celebrate() {
+      document.getElementById('celebrate').innerText = "🎉 BINGO! 🎉";
+      showConfetti();
+      setTimeout(() => {
+        document.getElementById('celebrate').innerText = "";
+      }, 1800);
+    }
+
+    function showConfetti() {
+      let canvas = document.getElementById('confetti');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      canvas.style.display = "block";
+      let ctx = canvas.getContext('2d');
+      let pieces = [];
+      for (let i = 0; i < 120; i++) {
+        pieces.push({
+          x: canvas.width / 2, y: canvas.height / 2,
+          w: 8 + Math.random() * 8,
+          h: 10 + Math.random() * 12,
+          color: `hsl(${Math.random() * 360}, 100%, 70%)`,
+          tilt: Math.random() * 10 - 5,
+          speed: 3 + Math.random() * 3,
+          angle: Math.random() * Math.PI * 2,
+          vx: Math.cos(Math.random() * Math.PI * 2) * (3 + Math.random() * 5),
+          vy: Math.sin(Math.random() * Math.PI * 2) * (3 + Math.random() * 5)
+        });
+      }
+      let frames = 0;
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        pieces.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy + 1.5;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.tilt * Math.PI / 180);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+        });
+        frames++;
+        if (frames < 40) requestAnimationFrame(animate);
+        else canvas.style.display = "none";
+      }
+      animate();
+    }
+
+    generateBoard();
+    window.addEventListener('resize', () => {
+      let canvas = document.getElementById('confetti');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  </script>
+</body>
+</html>
